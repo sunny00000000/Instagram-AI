@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryptopulse-ai"
+version = "0.1.0"
+description = "Cloud-native multi-agent crypto market intelligence and social publishing system"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [{name = "CryptoPulse AI"}]
+dependencies = [
+  "apscheduler>=3.10,<4",
+  "fastapi>=0.115,<1",
+  "feedparser>=6.0,<7",
+  "google-genai>=2.12,<3",
+  "httpx>=0.28,<1",
+  "openai>=1.60,<2",
+  "pillow>=11,<12",
+  "prometheus-client>=0.21,<1",
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3",
+  "python-json-logger>=3.2,<4",
+  "sqlalchemy>=2.0,<3",
+  "tenacity>=9,<10",
+  "uvicorn[standard]>=0.34,<1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "coverage>=7.6,<8",
+  "mypy>=1.14,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.25,<1",
+  "ruff>=0.9,<1"
+]
+
+[project.scripts]
+cryptopulse = "cryptopulse.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
