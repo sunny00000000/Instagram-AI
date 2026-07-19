@@ -37,7 +37,7 @@ CryptoPulse AI is a cloud-native, six-hour multi-agent crypto market intelligenc
 ## Repository structure
 
 ```text
-cryptopulse_ai/
+Instagram-AI/
 ├── src/cryptopulse/
 │   ├── agents/              # Manager/worker role implementations
 │   ├── providers/           # CoinGecko, news, Gemini/OpenAI, Meta
@@ -71,7 +71,7 @@ cryptopulse_ai/
 
 ```bash
 git clone <YOUR_REPOSITORY_URL>
-cd cryptopulse_ai
+cd Instagram-AI
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip
@@ -380,7 +380,7 @@ From the OCI server:
 
 ```bash
 cd /opt/cryptopulse
-bash scripts/update_from_git.sh main
+bash /opt/cryptopulse/scripts/update_from_git.sh main
 ```
 
 Manual equivalent:
@@ -400,7 +400,7 @@ Rollback to a known-good commit:
 ```bash
 cd /opt/cryptopulse
 git log --oneline -10
-bash scripts/rollback.sh <COMMIT_SHA>
+bash /opt/cryptopulse/scripts/rollback.sh <COMMIT_SHA>
 ```
 
 ## GitHub Actions deployment
@@ -491,7 +491,7 @@ docker compose restart app
 docker compose up -d --build app
 
 # Backup SQLite database
-bash scripts/backup_db.sh
+bash /opt/cryptopulse/scripts/backup_db.sh
 
 # Stop
 docker compose down
