@@ -20,8 +20,10 @@ from cryptopulse.providers.base import LLMProvider, MarketProvider, NewsProvider
 from cryptopulse.providers.coingecko import CoinGeckoProvider
 from cryptopulse.providers.llm import HeuristicLLMProvider, create_llm_provider
 from cryptopulse.providers.meta import MetaPublisher
+from cryptopulse.providers.meta_messaging import MetaMessagingClient
 from cryptopulse.providers.mock import MockMarketProvider, MockNewsProvider
 from cryptopulse.providers.news import HybridNewsProvider
+from cryptopulse.services.messaging import ConversationService
 from cryptopulse.services.qc import QualityController
 from cryptopulse.services.repository import Repository
 from cryptopulse.services.signer import MediaURLSigner
@@ -37,9 +39,11 @@ class Runtime:
     meta_publisher: MetaPublisher
     orchestrator: CEOOrchestrator
     signer: MediaURLSigner
+    messaging_client: MetaMessagingClient
+    conversation_service: ConversationService
 
     async def close(self) -> None:
-        for provider in (self.market_provider, self.news_provider, self.meta_publisher):
+        for provider in (self.market_provider, self.news_provider, self.meta_publisher, self.messaging_client):
             close = getattr(provider, "close", None)
             if close is not None:
                 await close()
@@ -62,6 +66,8 @@ def create_runtime(settings: Settings, use_mock: bool = False) -> Runtime:
 
     signer = MediaURLSigner(settings)
     meta_publisher = MetaPublisher(settings, signer)
+    messaging_client = MetaMessagingClient(settings)
+    conversation_service = ConversationService(settings)
     market_manager = MarketManagerAgent(market_provider, settings)
     news_manager = NewsManagerAgent(news_provider)
     research_manager = ResearchManagerAgent(market_provider, llm, repository, settings)
@@ -93,4 +99,6 @@ def create_runtime(settings: Settings, use_mock: bool = False) -> Runtime:
         meta_publisher=meta_publisher,
         orchestrator=orchestrator,
         signer=signer,
+        messaging_client=messaging_client,
+        conversation_service=conversation_service,
     )

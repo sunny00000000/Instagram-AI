@@ -1,3 +1,34 @@
+Metadata-Version: 2.4
+Name: cryptopulse-ai
+Version: 0.1.0
+Summary: Cloud-native multi-agent crypto market intelligence and social publishing system
+Author: CryptoPulse AI
+License: MIT
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: apscheduler<4,>=3.10
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: feedparser<7,>=6.0
+Requires-Dist: google-genai<3,>=2.12
+Requires-Dist: httpx<1,>=0.28
+Requires-Dist: openai<2,>=1.60
+Requires-Dist: pillow<12,>=11
+Requires-Dist: prometheus-client<1,>=0.21
+Requires-Dist: pydantic<3,>=2.10
+Requires-Dist: pydantic-settings<3,>=2.7
+Requires-Dist: python-json-logger<4,>=3.2
+Requires-Dist: sqlalchemy<3,>=2.0
+Requires-Dist: tenacity<10,>=9
+Requires-Dist: uvicorn[standard]<1,>=0.34
+Provides-Extra: dev
+Requires-Dist: coverage<8,>=7.6; extra == "dev"
+Requires-Dist: mypy<2,>=1.14; extra == "dev"
+Requires-Dist: pytest<9,>=8.3; extra == "dev"
+Requires-Dist: pytest-asyncio<1,>=0.25; extra == "dev"
+Requires-Dist: ruff<1,>=0.9; extra == "dev"
+Dynamic: license-file
+
 # CryptoPulse AI
 
 CryptoPulse AI is a cloud-native, six-hour multi-agent crypto market intelligence and social publishing system. It scans the active/liquid cryptocurrency universe, collects public global and crypto news, shortlists 15 bullish and 15 bearish candidates, performs deeper analysis, selects five **Bullish Watch** and five **Bearish Risk** assets, creates Instagram/Facebook media, runs automated quality control, publishes through Meta APIs, and records six-hour outcomes for evaluation.
@@ -538,29 +569,3 @@ feature branch → tests → pull request → CI → merge main → OCI pull/bui
 - [Testing strategy](docs/TESTING.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Release validation report](docs/VALIDATION_REPORT.md)
-
-
-## AI inbox and partnership manager (v0.2.0)
-
-The optional inbox service receives Meta messaging webhooks, validates the `X-Hub-Signature-256` HMAC, ignores echo events, deduplicates message IDs, classifies conversations, replies in dry-run or live mode, and stores a minimal audit record. Promotion offers are scored for identity, missing commercial terms, scam indicators, and brand safety. Final advertising acceptance always requires the owner.
-
-Safe initial configuration:
-
-```dotenv
-ENABLE_INSTAGRAM_MESSAGES=true
-ENABLE_FACEBOOK_MESSAGES=false
-AUTO_REPLY_ENABLED=false
-META_APP_ID=
-META_APP_SECRET=
-META_WEBHOOK_VERIFY_TOKEN=
-PROMOTION_FINAL_ACCEPTANCE_REQUIRES_OWNER=true
-```
-
-Webhook endpoints:
-
-```text
-GET  /webhooks/meta   Meta verification challenge
-POST /webhooks/meta   Signed message events
-```
-
-Enable `AUTO_REPLY_ENABLED=true` only after webhook signature, duplicate-event, dry-run reply, and Meta test-account checks pass. Never place Meta secrets in GitHub.
