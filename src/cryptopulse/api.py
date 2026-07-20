@@ -1,20 +1,24 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from starlette.responses import Response
 
 from cryptopulse.config import get_settings
+from cryptopulse.db import ConversationRow
 from cryptopulse.logging_config import configure_logging
 from cryptopulse.runtime import Runtime, create_runtime
 from cryptopulse.scheduler import create_scheduler
+from cryptopulse.schemas import utc_now
+from cryptopulse.schemas_messaging import InboundMessage
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -39,8 +43,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="CryptoPulse AI",
-    version="0.1.0",
-    description="Multi-agent crypto market intelligence and publishing runtime",
+    version="0.2.0",
+    description="Multi-agent crypto intelligence, publishing, inbox and partnership runtime",
     lifespan=lifespan,
     docs_url=None if settings.app_env == "production" else "/docs",
     redoc_url=None,
@@ -94,3 +98,49 @@ async def media(
         raise HTTPException(status_code=404, detail="Media not found")
     media_type = "video/mp4" if requested.suffix.lower() == ".mp4" else "image/png"
     return FileResponse(Path(requested), media_type=media_type)
+
+
+@app.get("/webhooks/meta")
+async def verify_meta_webhook(request: Request) -> Response:
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge", "")
+    if mode == "subscribe" and token == settings.meta_webhook_verify_token:
+        return Response(challenge, media_type="text/plain")
+    raise HTTPException(status_code=403, detail="Webhook verification failed")
+
+
+async def _process_message(runtime: Runtime, message: InboundMessage) -> None:
+    with runtime.database.session() as session:
+        if session.query(ConversationRow).filter_by(message_id=message.message_id).first():
+            return
+    plan = await runtime.conversation_service.plan_reply(message)
+    send_result = None
+    if runtime.settings.auto_reply_enabled and plan.should_send:
+        send_result = await runtime.messaging_client.send_text(message.sender_id, plan.reply_text)
+    with runtime.database.session() as session:
+        session.add(ConversationRow(
+            platform=message.platform, sender_id=message.sender_id, message_id=message.message_id,
+            inbound_text=message.text, category=plan.category.value, reply_text=plan.reply_text,
+            requires_owner=plan.requires_owner,
+            promotion_json=plan.promotion.model_dump(mode="json") if plan.promotion else {"send_result": send_result},
+            created_at=utc_now(),
+        ))
+        session.commit()
+
+
+@app.post("/webhooks/meta")
+async def receive_meta_webhook(request: Request, background_tasks: BackgroundTasks) -> JSONResponse:
+    runtime: Runtime = request.app.state.runtime
+    body = await request.body()
+    signature = request.headers.get("x-hub-signature-256")
+    if not runtime.messaging_client.verify_signature(body, signature):
+        raise HTTPException(status_code=403, detail="Invalid webhook signature")
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from exc
+    events = runtime.messaging_client.parse_events(payload)
+    for event in events:
+        background_tasks.add_task(_process_message, runtime, event)
+    return JSONResponse({"accepted": True, "events": len(events)})

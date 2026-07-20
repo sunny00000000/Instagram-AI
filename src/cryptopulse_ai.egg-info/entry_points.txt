@@ -1,0 +1,2 @@
+[console_scripts]
+cryptopulse = cryptopulse.cli:main

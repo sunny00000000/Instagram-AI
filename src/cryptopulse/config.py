@@ -58,6 +58,21 @@ class Settings(BaseSettings):
     publish_stories: bool = False
     publish_reels: bool = False
 
+
+    # AI inbox and Meta messaging
+    enable_instagram_messages: bool = False
+    enable_facebook_messages: bool = False
+    auto_reply_enabled: bool = False
+    meta_app_id: str | None = None
+    meta_app_secret: str | None = None
+    meta_webhook_verify_token: str | None = None
+    conversation_retention_days: int = Field(default=30, ge=1, le=365)
+    promotion_detection_enabled: bool = True
+    promotion_auto_reject_high_risk: bool = True
+    promotion_final_acceptance_requires_owner: bool = True
+    promotion_min_identity_score: int = Field(default=75, ge=0, le=100)
+    promotion_min_brand_safety_score: int = Field(default=80, ge=0, le=100)
+
     public_base_url: str | None = None
     media_signing_secret: str = "change-this-to-a-long-random-secret"
     media_url_ttl_seconds: int = Field(default=86400, ge=300, le=604800)
@@ -123,6 +138,11 @@ class Settings(BaseSettings):
             missing.append("PUBLIC_BASE_URL")
         if self.media_signing_secret == "change-this-to-a-long-random-secret":
             missing.append("MEDIA_SIGNING_SECRET")
+        if self.auto_reply_enabled:
+            if not self.meta_app_secret:
+                missing.append("META_APP_SECRET")
+            if not self.meta_webhook_verify_token:
+                missing.append("META_WEBHOOK_VERIFY_TOKEN")
         return missing
 
 

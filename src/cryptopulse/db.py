@@ -69,6 +69,20 @@ class ProjectProfileRow(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class ConversationRow(Base):
+    __tablename__ = "conversations"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    platform: Mapped[str] = mapped_column(String(32), index=True)
+    sender_id: Mapped[str] = mapped_column(String(128), index=True)
+    message_id: Mapped[str] = mapped_column(String(256), unique=True, index=True)
+    inbound_text: Mapped[str] = mapped_column(Text, default="")
+    category: Mapped[str] = mapped_column(String(64), index=True)
+    reply_text: Mapped[str] = mapped_column(Text, default="")
+    requires_owner: Mapped[bool] = mapped_column(Boolean, default=False)
+    promotion_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class Database:
     def __init__(self, settings: Settings):
         connect_args = (
